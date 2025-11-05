@@ -5,7 +5,11 @@ import Link from "next/link";
 
 export default async function Home() {
   const session = await auth();
-  if (session) redirect("/docs");
+  // if (session) redirect("/docs");
+  
+  if (session?.user?.email === "99.cent.bagel@gmail.com") {
+    redirect("/docs");
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-black">
