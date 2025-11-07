@@ -2,33 +2,38 @@
 import { auth } from "./auth";
 import { NextResponse } from "next/server";
 
-
 export default auth((req) => {
   const { pathname, origin } = req.nextUrl;
   const session = req.auth;
   const email = session?.user?.email;
+
+  // Always absolute URL for Edge redirects
   const SIGNIN_URL = `${origin}/api/auth/signin?callbackUrl=/docs`;
 
-  // 1️⃣ If root path `/`, always send to OAuth sign-in
+  // 1️⃣ Root path -> force login
   if (pathname === "/") {
     return NextResponse.redirect(SIGNIN_URL);
   }
 
-  // 2️⃣ If request is under /docs or /content/docs
+  // 2️⃣ Protect docs
   if (pathname.startsWith("/docs") || pathname.startsWith("/content/docs")) {
-    // allow only your Gmail account
+    // Allow only if the session is valid AND Gmail matches
     if (email === "99.cent.bagel@gmail.com") {
       return NextResponse.next();
     }
-    // otherwise restart OAuth
-    return NextResponse.redirect(SIGNIN_URL);
+
+    // Clear any existing cookies/session before redirect
+    const res = NextResponse.redirect(SIGNIN_URL);
+    res.cookies.delete("next-auth.session-token");
+    res.cookies.delete("__Secure-next-auth.session-token");
+    res.cookies.delete("next-auth.csrf-token");
+    return res;
   }
 
-  // 3️⃣ All other routes behave as before
+  // 3️⃣ Everything else: allow
   return NextResponse.next();
 });
 
 export const config = {
-  // keep this: apply middleware to all non-static, non-API routes (includes `/`)
   matcher: ["/((?!_next|api|.*\\..*).*)"],
 };
