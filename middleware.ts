@@ -2,12 +2,12 @@
 import { auth } from "./auth";
 import { NextResponse } from "next/server";
 
-const SIGNIN_URL = "/api/auth/signin?callbackUrl=/docs";
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const session = req.auth;
   const email = session?.user?.email;
+  const SIGNIN_URL = `${origin}/api/auth/signin?callbackUrl=/docs`;
 
   // 1️⃣ If root path `/`, always send to OAuth sign-in
   if (pathname === "/") {
