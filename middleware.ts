@@ -9,20 +9,26 @@ export default auth((req) => {
   const session = req.auth;
   const email = session?.user?.email;
 
-  // 1️⃣ If request is under /docs or /content/docs
-  if (pathname.startsWith("/docs") || pathname.startsWith("/content/docs")) {
-    // 2️⃣ Allow only your Gmail account
-    if (email === "99.cent.bagel@gmail.com") {
-      return NextResponse.next();
-    }
-    // 3️⃣ Otherwise redirect to sign-in
+  // 1️⃣ If root path `/`, always send to OAuth sign-in
+  if (pathname === "/") {
     return NextResponse.redirect(SIGNIN_URL);
   }
 
-  // 4️⃣ For all other routes (not matched) → do nothing
+  // 2️⃣ If request is under /docs or /content/docs
+  if (pathname.startsWith("/docs") || pathname.startsWith("/content/docs")) {
+    // allow only your Gmail account
+    if (email === "99.cent.bagel@gmail.com") {
+      return NextResponse.next();
+    }
+    // otherwise restart OAuth
+    return NextResponse.redirect(SIGNIN_URL);
+  }
+
+  // 3️⃣ All other routes behave as before
   return NextResponse.next();
 });
 
 export const config = {
-  matcher: ["/((?!_next|api|.*\\..*).*)"], // matches all non-static routes
+  // keep this: apply middleware to all non-static, non-API routes (includes `/`)
+  matcher: ["/((?!_next|api|.*\\..*).*)"],
 };
