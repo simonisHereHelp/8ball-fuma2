@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 
 export default auth((req) => {
-  const { pathname } = req.nextUrl;
+  const { pathname, origin } = req.nextUrl;
   const session = req.auth;
   const email = session?.user?.email;
   const SIGNIN_URL = `${origin}/api/auth/signin?callbackUrl=/docs`;
