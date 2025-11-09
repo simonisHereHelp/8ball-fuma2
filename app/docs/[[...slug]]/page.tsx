@@ -1,18 +1,51 @@
-import { getPageImage, source } from '@/lib/source';
+import { getPageImage, source } from "@/lib/source";
 import {
   DocsBody,
   DocsDescription,
   DocsPage,
   DocsTitle,
-} from 'fumadocs-ui/page';
-import { notFound } from 'next/navigation';
-import { getMDXComponents } from '@/mdx-components';
-import type { Metadata } from 'next';
-import { createRelativeLink } from 'fumadocs-ui/mdx';
+} from "fumadocs-ui/page";
+import { notFound } from "next/navigation";
+import { getMDXComponents } from "@/mdx-components";
+import type { Metadata } from "next";
+import { createRelativeLink } from "fumadocs-ui/mdx";
+import ReactMarkdown from "react-markdown";
+import { getRemotePage } from "@/lib/remote-page";
 
-export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
+export default async function Page(
+  props: PageProps<"/docs/[[...slug]]">
+) {
   const params = await props.params;
-  const page = source.getPage(params.slug);
+
+  const slugArray = Array.isArray(params.slug)
+    ? params.slug
+    : [params.slug ?? "index"];
+
+  const last = slugArray[slugArray.length - 1] || "index";
+
+  // remote_* → load from Google Drive
+  if (last.startsWith("remote_")) {
+    const slugKey = last; // e.g. "remote_test"
+    const remote = await getRemotePage(slugKey);
+    if (!remote || !remote.body_md) notFound();
+
+    return (
+      <DocsPage>
+        <DocsTitle>{remote.title || slugKey}</DocsTitle>
+        <DocsDescription>
+          Remote content loaded from Google Drive ({slugKey})
+        </DocsDescription>
+        <DocsBody>
+          <ReactMarkdown className="prose max-w-none">
+            {remote.body_md}
+          </ReactMarkdown>
+        </DocsBody>
+      </DocsPage>
+    );
+  }
+
+  // page_* or anything else → local Fumadocs content
+  const page = source.getPage(slugArray);
   if (!page) notFound();
 
   const MDX = page.data.body;
@@ -24,7 +57,6 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
       <DocsBody>
         <MDX
           components={getMDXComponents({
-            // this allows you to link to other pages with relative file paths
             a: createRelativeLink(source, page),
           })}
         />
@@ -38,11 +70,23 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata(
-  props: PageProps<'/docs/[[...slug]]'>,
+  props: PageProps<"/docs/[[...slug]]">
 ): Promise<Metadata> {
   const params = await props.params;
-  const page = source.getPage(params.slug);
-  if (!page) notFound();
+  const slugArray = Array.isArray(params.slug)
+    ? params.slug
+    : [params.slug ?? "index"];
+  const last = slugArray[slugArray.length - 1] || "index";
+
+  // For remote_* pages you can optionally fetch title,
+  // but to keep changes minimal we only handle local for now
+  const page = source.getPage(slugArray);
+  if (!page) {
+    return {
+      title: last,
+      description: `Remote page ${last}`,
+    };
+  }
 
   return {
     title: page.data.title,
