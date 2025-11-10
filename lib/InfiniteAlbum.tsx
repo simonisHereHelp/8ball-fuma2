@@ -12,8 +12,8 @@ const fetcher = (url: string) =>
     return r.json();
   });
 
-const getKey = (pageIndex: number, previousPageData: any) => {
-  if (previousPageData && !previousPageData.hasMore) return null;
+const getKey = (pageIndex: number, prev: any) => {
+  if (prev && !prev.hasMore) return null;
   const offset = pageIndex * PAGE_SIZE;
   return `/api/album?offset=${offset}&limit=${PAGE_SIZE}`;
 };
@@ -47,14 +47,16 @@ export default function InfiniteAlbum() {
   }, [hasMore, isValidating, setSize]);
 
   return (
-    <div className="space-y-3">
-      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+    <div className="space-y-4">
+      {/* Responsive grid; cards auto-scale */}
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
         {items.map((it: any) => (
           <figure
             key={it.id}
-            className="rounded-xl border border-gray-200 bg-white shadow-sm p-2"
+            className="flex flex-col rounded-xl border border-neutral-200 bg-white overflow-hidden"
           >
-            <div className="aspect-[4/3] overflow-hidden rounded-lg bg-gray-100">
+            {/* Aspect-ratio box: controls thumbnail size, image just fills it */}
+            <div className="w-full aspect-[4/3] bg-neutral-100">
               <img
                 src={it.url}
                 alt={it.title}
@@ -62,9 +64,9 @@ export default function InfiniteAlbum() {
                 className="w-full h-full object-cover"
               />
             </div>
-            <figcaption className="mt-2 text-sm">
+            <figcaption className="px-2 py-2 text-xs text-neutral-800">
               <div className="font-medium truncate">{it.title}</div>
-              <div className="text-gray-500 text-xs">
+              <div className="text-neutral-500">
                 {new Date(it.createdAt).toLocaleString()}
               </div>
             </figcaption>
@@ -72,11 +74,16 @@ export default function InfiniteAlbum() {
         ))}
       </div>
 
+      {/* sentinel */}
       <div
         ref={sentinelRef}
-        className="h-10 flex items-center justify-center text-sm text-gray-400"
+        className="h-8 flex items-center justify-center text-sm text-neutral-400"
       >
-        {hasMore ? "Loading…" : "No more"}
+        {hasMore
+          ? isValidating
+            ? "Loading…"
+            : "Scroll for more"
+          : "No more images"}
       </div>
 
       {error && (
