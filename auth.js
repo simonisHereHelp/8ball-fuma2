@@ -46,7 +46,8 @@ export const {
     async signIn({ user }) {
       // ✅ Only allow this Gmail account
       if (user?.email === "99.cent.bagel@gmail.com") {
-        return true;
+        // Redirect to documentation after sign-in, need to optimize this flow
+          return "/docs/Bank-Sec"
       }
 
       // ❌ Everyone else goes to /unauthorized
