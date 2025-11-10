@@ -33,7 +33,8 @@ export async function GET() {
   const files = (data.files || []).map((f) => ({
     id: f.id,
     title: f.name,
-    url: f.webContentLink || f.thumbnailLink,
+    // ✅ Strip "&export=download" suffix for proper inline display
+    url: (f.webContentLink || f.thumbnailLink)?.replace(/&export=download$/, ""),
     createdAt: f.modifiedTime,
   }));
 
