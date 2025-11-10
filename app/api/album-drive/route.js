@@ -4,12 +4,12 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 const API_KEY = process.env.GOOGLE_DRIVE_API_KEY;
-const FOLDER_ID = process.env.GOOGLE_FOLDER_ID;
+const FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
 export async function GET() {
   if (!API_KEY || !FOLDER_ID) {
     return NextResponse.json(
-      { error: "Missing GOOGLE_DRIVE_API_KEY or GOOGLE_FOLDER_ID" },
+      { error: "Missing GOOGLE_DRIVE_API_KEY or GOOGLE_DRIVE_FOLDER_ID" },
       { status: 500 }
     );
   }
