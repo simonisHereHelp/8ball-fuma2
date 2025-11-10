@@ -18,8 +18,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^9.0.1",
-    "swr": "^2.2.5",
-    "googleapis": "^121.0.0"
+    "swr": "^2.2.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.16",
