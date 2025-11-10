@@ -1,14 +1,14 @@
-// app/api/album/route.ts
-import { NextRequest, NextResponse } from "next/server";
+// app/api/album/route.js
+import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 
-export const runtime = "nodejs"; // needed for fs access
+export const runtime = "nodejs";
 
 const IMG_DIR = path.join(process.cwd(), "public", "img");
 const VALID = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 
-export async function GET(req: NextRequest) {
+export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const offset = parseInt(searchParams.get("offset") ?? "0", 10);
   const limit = Math.min(
@@ -30,8 +30,7 @@ export async function GET(req: NextRequest) {
       })
     );
 
-    const list = files
-      .filter(Boolean) as { name: string; mtimeMs: number }[];
+    const list = files.filter(Boolean);
     list.sort((a, b) => b.mtimeMs - a.mtimeMs);
 
     const slice = list.slice(offset, offset + limit);
@@ -43,22 +42,15 @@ export async function GET(req: NextRequest) {
       createdAt: new Date(f.mtimeMs).toISOString(),
     }));
 
-    return NextResponse.json(
-      {
-        items,
-        total: list.length,
-        hasMore: offset + limit < list.length,
-      },
-      {
-        headers: {
-          "Cache-Control": "s-maxage=30, stale-while-revalidate=120",
-        },
-      }
-    );
-  } catch (err: any) {
+    return NextResponse.json({
+      items,
+      total: list.length,
+      hasMore: offset + limit < list.length,
+    });
+  } catch (err) {
     console.error(err);
     return NextResponse.json(
-      { error: err.message ?? "Internal error" },
+      { error: err.message || "Internal error" },
       { status: 500 }
     );
   }
