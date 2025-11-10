@@ -1,4 +1,4 @@
-// lib/InfiniteAlbum.tsx
+// lib/InfiniteAlbum.tsx  (only grid line changed)
 "use client";
 
 import useSWRInfinite from "swr/infinite";
@@ -48,14 +48,13 @@ export default function InfiniteAlbum() {
 
   return (
     <div className="space-y-4">
-      {/* Responsive grid; cards auto-scale */}
-      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+      {/* ✅ 1 column for all screen sizes */}
+      <div className="grid grid-cols-1 gap-4">
         {items.map((it: any) => (
           <figure
             key={it.id}
             className="flex flex-col rounded-xl border border-neutral-200 bg-white overflow-hidden"
           >
-            {/* Aspect-ratio box: controls thumbnail size, image just fills it */}
             <div className="w-full aspect-[4/3] bg-neutral-100">
               <img
                 src={it.url}
@@ -74,7 +73,6 @@ export default function InfiniteAlbum() {
         ))}
       </div>
 
-      {/* sentinel */}
       <div
         ref={sentinelRef}
         className="h-8 flex items-center justify-center text-sm text-neutral-400"
