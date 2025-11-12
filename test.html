@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Drive Folder Image Gallery</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 16px;
+    }
+    .img-card {
+      width: 200px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .img-card img {
+      width: 100%;
+      object-fit: cover;
+      aspect-ratio: 4 / 3;
+    }
+    .img-card .caption {
+      padding: 8px;
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <script type="module">
+    const API_KEY = 'AIzaSyAo5FXGlLr4uYu4Hra1RewyQDniAe8_XxQ';  // Replace with your actual API key
+    const FOLDER_ID = '1QZIlGdbY2YPBQrgdmWILdE2ITA-YtdEW';
+
+    async function listImages(offset = 0, pageSize = 12) {
+      const q = encodeURIComponent(
+        `'${FOLDER_ID}' in parents and mimeType contains 'image/' and trashed = false`
+      );
+      const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,webContentLink,thumbnailLink,modifiedTime)&key=${API_KEY}&pageSize=${pageSize}&pageToken=${offset ? offset : ''}`;
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return data.files.map((f) => ({
+        id: f.id,
+        title: f.name,
+        url: (f.webContentLink || f.thumbnailLink)?.replace(/&export=download$/, ''),
+        createdAt: f.modifiedTime,
+      }));
+    }
+
+    async function loadGallery() {
+      try {
+        const items = await listImages();
+        const container = document.body;
+
+        items.forEach((item) => {
+          const card = document.createElement('div');
+          card.className = 'img-card';
+
+          const img = document.createElement('img');
+          img.src = item.url;
+          img.alt = item.title;
+          card.appendChild(img);
+
+          const caption = document.createElement('div');
+          caption.className = 'caption';
+          caption.innerText = `${item.title} — ${new Date(item.createdAt).toLocaleDateString()}`;
+          card.appendChild(caption);
+
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error('Error loading gallery:', err);
+        document.body.innerText = 'Failed to load images';
+      }
+    }
+
+    loadGallery();
+  </script>
+</body>
+</html>

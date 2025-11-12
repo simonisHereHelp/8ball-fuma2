@@ -4,36 +4,29 @@ import { NextResponse } from "next/server";
 
 export default auth((req) => {
   const { pathname, origin } = req.nextUrl;
-  const session = req.auth;
-  const email = session?.user?.email;
+  const email = req.auth?.user?.email;
+  const isAllowed = email === "99.cent.bagel@gmail.com";
 
-  // Always absolute URL for Edge redirects
-  const SIGNIN_URL = `${origin}/api/auth/signin?callbackUrl=/docs`;
+  // Build once (absolute URL for Edge)
+  const signInUrl = new URL("/api/auth/signin", origin);
+  signInUrl.searchParams.set("callbackUrl", "/docs/Bank-Sec");
 
-  // 1️⃣ Root path -> force login
+  // 1) Force sign-in on landing
   if (pathname === "/") {
-    return NextResponse.redirect(SIGNIN_URL);
+    return NextResponse.redirect(signInUrl);
   }
 
-  // 2️⃣ Protect docs
+  // 2) Gate docs-only
   if (pathname.startsWith("/docs") || pathname.startsWith("/content/docs")) {
-    // Allow only if the session is valid AND Gmail matches
-    if (email === "99.cent.bagel@gmail.com") {
-      return NextResponse.next();
-    }
-
-    // Clear any existing cookies/session before redirect
-    const res = NextResponse.redirect(SIGNIN_URL);
-    res.cookies.delete("next-auth.session-token");
-    res.cookies.delete("__Secure-next-auth.session-token");
-    res.cookies.delete("next-auth.csrf-token");
-    return res;
+    if (isAllowed) return NextResponse.next();
+    return NextResponse.redirect(signInUrl);
   }
 
-  // 3️⃣ Everything else: allow
+  // 3) Allow everything else
   return NextResponse.next();
 });
 
 export const config = {
+  // exclude Next internals and all API routes from middleware
   matcher: ["/((?!_next|api|.*\\..*).*)"],
 };
