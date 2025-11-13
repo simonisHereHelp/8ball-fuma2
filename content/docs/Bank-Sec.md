@@ -95,6 +95,10 @@ description: Your 兆豐與銀行
 
 total: 329,000 (2025.11.5)
 
+## test
+![兆豐銀行櫃台](https://drive.google.com/uc?export=view&id=1kYSo5NNSkmQk4TBWnllsApFKjZwSlrU6)
+
+
 > 備註：  
 > 本紀錄為個人資產摘要，用於年度財務追蹤與報稅對應。  
 > 資料更新時間：2025 年 10 月 21 日。
