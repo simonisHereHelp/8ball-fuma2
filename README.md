@@ -48,4 +48,12 @@ A `source.config.ts` config file has been included, you can customise different 
 
 Read the [Introduction](https://fumadocs.dev/docs/mdx) for further details.
 
+### Google DRIVE Id + Next 14
+
+```
+Next.js+MDX 預設會使用 next/image 元件來自動最佳化圖片。然而，next/image 要求您在 next.config.js 檔案中明確設定允許的外部圖片網域。
+Google Drive 的圖片 URL https://drive.google.com 是一個通用的網域，而不是一個圖片 CDN 網域。此外，您提供的 URL 格式雖然可以顯示圖片，但在 Next.js 14 的嚴格配置下可能無法直接使用。
+```
+next.config.mjs= 
+![alt text](./public/img/readme_next_config.png)
 
