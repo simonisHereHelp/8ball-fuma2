@@ -14,6 +14,46 @@ Nov 12, 2025
 | **Album-like UI**                  | ✅ Yes  | `z_album.mdx` and `z_album2.mdx` — grid-based image layout |
 | **Drive Images (CORS-blocked)**    | ⚠️ Fail | Only icons shown; raw image fetch restricted by Google Drive CORS policy |
 
+| Area                     | Files / Folders                                                                 | Role in 8ball-fuma2                                                                                           |
+|--------------------------|----------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| OAuth (NextAuth + gate)  | `auth.js`                                                                        | Central NextAuth config: Google provider only, JWT sessions, intended to enforce single Gmail account.        |
+|                          | `app/api/auth/[...nextauth]/route.js`                                           | Exposes `GET`/`POST` from `auth.js` as the `/api/auth/[...nextauth]` API route.                               |
+|                          | `middleware.ts`                                                                  | Edge middleware: reads `req.auth.user.email`, gates `/docs` & `/content/docs`, redirects to sign-in URL.      |
+|                          | `app/page.tsx`                                                                   | Landing page: calls `auth()`, redirects to `/api/auth/signin?callbackUrl=/docs`, hard-gates `99.cent.bagel`.  |
+| Google Drive (content)   | `lib/remote-page.ts`                                                             | Server helper to pull **remote MD/JSON docs from a Drive folder** via `GOOGLE_DRIVE_API_KEY` + FOLDER_ID.     |
+| Google Drive (album)     | `app/api/album-drive/route.js`                                                  | Node runtime API route: lists files in a specific **Drive folder** via REST API + API key, returns JSON list. |
+|                          | `lib/InfiniteAlbumDrive.tsx`                                                    | Client component using `swr` infinite loader to render scrollable Drive-based image cards from that API.      |
+| FumaDocs core (docs UI)  | `source.config.ts`                                                               | FumaDocs MDX config: `content/docs` collection, schemas, processed markdown.                                  |
+|                          | `lib/source.ts`                                                                  | FumaDocs source loader (`loader()` + `docs.toFumadocsSource()`), OG image + LLM text helpers.                 |
+|                          | `lib/layout.shared.tsx`                                                          | Shared layout options (`nav.title = 'My App'`) used by FumaDocs layouts.                                      |
+|                          | `mdx-components.tsx`                                                             | Exposes `getMDXComponents` to plug FumaDocs MDX components into pages.                                        |
+|                          | `app/layout.tsx`                                                                 | Root layout using `fumadocs-ui`’s `RootProvider`.                                                             |
+|                          | `app/(home)/layout.tsx`                                                         | Home layout using `HomeLayout` from `fumadocs-ui/layouts/home`.                                               |
+|                          | `app/docs/layout.tsx`                                                            | Docs layout using `DocsLayout` from `fumadocs-ui/layouts/docs`.                                               |
+|                          | `app/docs/[[...slug]]/page.tsx`                                                 | Main docs page: resolves slug via FumaDocs `source`, falls back to `getRemotePage` (Drive) when needed.      |
+|                          | `app/api/search/route.ts`                                                       | Docs search endpoint built from FumaDocs source.                                                              |
+|                          | `app/llms-full.txt/route.ts`                                                    | Exports full docs text for LLM ingestion using `getLLMText(source)`.                                          |
+|                          | `app/og/docs/[...slug]/route.tsx`                                               | OG-image generator for docs pages using FumaDocs’ OG helper.                                                  |
+| z_album (local images)   | `app/api/album/route.js`                                                        | Lists `public/img` files (JPEG/PNG/WEBP) with paging; returns `{items,total,hasMore}`.                        |
+|                          | `lib/InfiniteAlbum.tsx`                                                         | Infinite-scroll client grid consuming `/api/album` with `swr/infinite`.                                       |
+|                          | `content/docs/z_album.mdx`                                                      | FumaDocs page that imports `<InfiniteAlbum />` and exposes “Local Album” under `/docs/z_album`.               |
+| z_album2 (Drive images)  | `app/api/album-drive/route.js` (same as above)                                  | Drive folder listing for images (no paging yet, `hasMore:false`).                                             |
+|                          | `lib/InfiniteAlbumDrive.tsx`                                                    | Infinite-scroll client over `/api/album-drive`, renders Drive thumbnails/links.                               |
+|                          | `content/docs/z_album2.mdx`                                                     | FumaDocs page that imports `<InfiniteAlbumDrive />` under `/docs/z_album2`.                                   |
+
+---
+## OAuth behavior, email gate, and redirect paths
+
+| Context / Path                         | Behavior                                                                                           | `user.email` usage                                      | Redirect / Target                                     |
+|---------------------------------------|----------------------------------------------------------------------------------------------------|---------------------------------------------------------|-------------------------------------------------------|
+| Initial landing `/` (app/page.tsx)    | Calls `auth()` server-side. If no session → immediately `redirect("/api/auth/signin?callbackUrl=/docs/Bank-Sec")`. | Checks `session.user.email` after auth.                 | Not-signed-in → `/api/auth/signin?callbackUrl=/docs`. |
+| Landing with allowed email            | If signed-in and `session.user.email === "99.cent.bagel@gmail.com"` → `redirect("/docs/Bank-Sec")`.         | Uses strict equality against hard-coded Gmail.          | `/docs` (FumaDocs root).                              |
+| Landing with *other* signed-in email  | Session exists but email ≠ allowed → show minimal page with **Sign in** link back to Google sign-in. | Re-prompts sign-in to try again with the allowed Gmail. | Link to `/api/auth/signin?callbackUrl=/docs`.         |
+| Middleware for `/docs` & `/content/docs` | Runs on Edge via `auth()` wrapper. Computes `isAllowed = (email === "99.cent.bagel@gmail.com")`. If not allowed → redirect. | Reads `req.auth.user.email` from NextAuth.             | Redirects to `/api/auth/signin?callbackUrl=/docs/Bank-Sec`. |
+| Middleware for `/` (landing)          | Also intercepts `/` and redirects to the same sign-in URL (before app/page.tsx logic runs).        | Same `isAllowed` check.                                 | `/api/auth/signin?callbackUrl=/docs/Bank-Sec`.        |
+| Other paths (non-docs, non-static)    | Middleware allows them (`NextResponse.next()`), no email gate enforced.                            | `email` is read but not used to block.                  | Stays on requested path.                              |
+| NextAuth core (`auth.js`)             | Configured with Google provider, JWT sessions, no DB adapter. Comments say “enforces single account (99.cent.bagel)” and “shows account picker every time.” | Populates `token.email/name/picture`, then copies into `session.user`. | Redirect behavior itself is primarily in `app/page.tsx` + middleware. |
+
 ---
 
 ## Env Variables and Short Verbose
