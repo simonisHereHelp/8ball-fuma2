@@ -97,3 +97,23 @@ Google Drive 的圖片 URL https://drive.google.com 是一個通用的網域，�
 next.config.mjs= 
 ![alt text](./public/img/readme_next_config.png)
 
+
+## Recent Works--on z_Album2
+
+```
+Files (4)
+app/api/album-drive/[id]/image/route.js
+
+app/api/album-drive/route.js
+
+app/z_album2/page.tsx
+
+lib/InfiniteAlbumDrive.tsx
+
+```
+File | Highlight Summary | Why This Works Better (vs. old version)
+--- | --- | ---
+app/api/album-drive/route.js | Normalized Drive API listing with pagination, shared-drive support, and stable thumbnail/view/download URLs. | Old version returned inconsistent file metadata and broke on shared drives. The new API enforces clean params, reliable URLs, and predictable paging so the gallery loads fast and consistently.
+app/api/album-drive/[id]/image/route.js | Proxies each Drive image through Next.js with proper cache + content headers. | Previously images failed due to Google referrer blocks. The new proxy serves everything from your own domain, avoiding cross-origin issues and improving load speed with cache control.
+app/z_album2/page.tsx | Clean standalone viewer page explaining the Drive proxy and mounting the infinite gallery directly. | Old MDX-based routing added unnecessary dependencies. The new page removes FumaDocs complexity and ensures users hit a simple, reliable viewer route.
+lib/InfiniteAlbumDrive.tsx | SWR Infinite + IntersectionObserver client gallery with thumbnail fallback and clear status errors. | Old gallery loaded large batches and broke on missing images. The new incremental loader uses less memory, gracefully handles Drive failures, and always shows a fallback so the UI never “goes blank.”
