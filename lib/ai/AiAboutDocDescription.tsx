@@ -1,4 +1,4 @@
-import { getAboutDocumentDescription } from '@/lib/ai/get-about-document-description';
+import { getAboutDocumentDescription } from './get-about-document-description';
 
 export async function AiAboutDocDescription() {
   const description = await getAboutDocumentDescription();
